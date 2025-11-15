@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AayuCare POC - Find the Right Doctor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', sans-serif;
+            background: #fff7f3;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #f0e6df;
+            padding: 50px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            color: #2d2d2d;
+            font-size: 2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 0.95em;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: #2d2d2d;
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            letter-spacing: 0.3px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #fafafa;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #2d2d2d;
+            background: white;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #2d2d2d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .btn:hover {
+            background: #1a1a1a;
+        }
+
+        .btn:disabled {
+            background: #d0d0d0;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 2px solid #f0f0f0;
+            border-top: 2px solid #2d2d2d;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid #f0e6df;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .doctors {
+            margin-top: 0;
+        }
+
+        .doctors h3 {
+            color: #2d2d2d;
+            margin-bottom: 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .doctor-card {
+            background: #fafafa;
+            border: 1px solid #f0e6df;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .doctor-card:hover {
+            background: white;
+            border-color: #2d2d2d;
+        }
+
+        .doctor-name {
+            color: #2d2d2d;
+            font-size: 1em;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .doctor-address {
+            color: #999;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+        }
+
+        .doctor-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .meta-item {
+            display: inline-block;
+            padding: 4px 10px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .meta-item.rating {
+            background: white;
+            color: #2d2d2d;
+            border-color: #2d2d2d;
+        }
+
+        .meta-item.distance {
+            background: white;
+            color: #666;
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 1px solid #ffebeb;
+            color: #d63031;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .example {
+            background: transparent;
+            padding: 12px 0;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #999;
+            line-height: 1.6;
+        }
+
+        .example strong {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .voice-input-container {
+            position: relative;
+        }
+
+        .mic-btn {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #e5e5e5;
+            background: white;
+            color: #2d2d2d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: all 0.2s;
+        }
+
+        .mic-btn:hover {
+            background: #f5f5f5;
+            border-color: #2d2d2d;
+        }
+
+        .mic-btn.recording {
+            background: #2d2d2d;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .mic-btn:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .voice-status {
+            text-align: center;
+            color: #666;
+            font-weight: 400;
+            margin-top: 10px;
+            min-height: 20px;
+            font-size: 0.85em;
+        }
+
+        .voice-status.error {
+            color: #d63031;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 AayuCare POC</h1>
+            <p>Find the right doctor for your symptoms</p>
+        </div>
+
+        <form id="symptomForm">
+            <div class="form-group">
+                <label for="input">Tell us your symptoms and location</label>
+                <div class="voice-input-container">
+                    <textarea 
+                        id="input" 
+                        name="input" 
+                        placeholder="Describe your symptoms and location... (e.g., 'I have fever and headache in Mumbai')"
+                        required
+                        rows="6"
+                    ></textarea>
+                    <button type="button" class="mic-btn" id="micBtn" title="Click to speak">
+                        🎤
+                    </button>
+                </div>
+                <div class="voice-status" id="voiceStatus"></div>
+                <div class="example">
+                    <strong>Examples:</strong><br>
+                    • "I have knee pain when walking, I am in Mumbai"<br>
+                    • "Fever and cold for 3 days, location Bangalore"<br>
+                    • "Chest pain and breathing difficulty in Delhi"
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                🔍 Find Doctor
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #666; font-weight: 400; font-size: 0.9em;">
+                Finding doctors...
+            </p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="doctors">
+                <h3>🏥 Recommended Doctors for You</h3>
+                <div id="doctorList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('symptomForm');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+        const micBtn = document.getElementById('micBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const inputTextarea = document.getElementById('input');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // Voice recording functionality
+        micBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        await sendAudioToServer(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    micBtn.classList.add('recording');
+                    micBtn.textContent = '⏹️';
+                    voiceStatus.textContent = '🎤 Recording... Click to stop';
+                    voiceStatus.classList.remove('error');
+                } catch (err) {
+                    console.error('Microphone access error:', err);
+                    voiceStatus.textContent = 'Microphone access denied';
+                    voiceStatus.classList.add('error');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                micBtn.textContent = '🎤';
+                voiceStatus.textContent = 'Processing audio...';
+            }
+        });
+
+        async function sendAudioToServer(audioBlob) {
+            try {
+                micBtn.disabled = true;
+                voiceStatus.textContent = '⏳ Converting speech to text...';
+
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+
+                const response = await fetch('http://localhost:8000/api/speech-to-text', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to convert speech to text');
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.text) {
+                    inputTextarea.value = data.text;
+                    voiceStatus.textContent = '✅ Speech converted successfully!';
+                    voiceStatus.classList.remove('error');
+                    setTimeout(() => {
+                        voiceStatus.textContent = '';
+                    }, 3000);
+                } else {
+                    throw new Error('No text received from API');
+                }
+            } catch (err) {
+                console.error('Speech to text error:', err);
+                voiceStatus.textContent = '❌ Failed to convert speech. Please try again.';
+                voiceStatus.classList.add('error');
+            } finally {
+                micBtn.disabled = false;
+            }
+        }
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form data
+            const userInput = document.getElementById('input').value;
+
+            // Reset UI
+            loading.classList.add('active');
+            results.classList.remove('active');
+            error.classList.remove('active');
+            submitBtn.disabled = true;
+
+            try {
+                // Call backend API
+                const response = await fetch('http://localhost:8000/api/find-doctor', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: userInput
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response from server');
+                }
+
+                const data = await response.json();
+
+                // Display doctors
+                const doctorList = document.getElementById('doctorList');
+                doctorList.innerHTML = '';
+
+                data.nearby_doctors.forEach(doctor => {
+                    const card = document.createElement('div');
+                    card.className = 'doctor-card';
+                    const nameHtml = doctor.url ? 
+                        `<a href="${doctor.url}" target="_blank" style="color: #2d2d2d; text-decoration: none;">${doctor.name} →</a>` : 
+                        doctor.name;
+                    card.innerHTML = `
+                        <div class="doctor-name">${nameHtml}</div>
+                        <div class="doctor-address">📍 ${doctor.address}</div>
+                        <div class="doctor-meta">
+                            <span class="meta-item rating">⭐ ${doctor.rating} rating</span>
+                            <span class="meta-item distance">📏 ${doctor.distance}</span>
+                            <span class="meta-item">${doctor.open}</span>
+                        </div>
+                    `;
+                    doctorList.appendChild(card);
+                });
+
+                results.classList.add('active');
+
+            } catch (err) {
+                error.textContent = `Error: ${err.message}. Make sure the backend server is running!`;
+                error.classList.add('active');
+                console.error('Error:', err);
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Check if backend is running on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('http://localhost:8000/api/health');
+                const data = await response.json();
+                if (!data.gemini_configured) {
+                    error.textContent = 'Warning: Gemini API key not configured. Please add GEMINI_API_KEY to .env file';
+                    error.classList.add('active');
+                }
+                if (!data.sarvam_configured) {
+                    micBtn.disabled = true;
+                    micBtn.title = 'Sarvam API not configured';
+                }
+            } catch (err) {
+                error.textContent = 'Backend server is not running! Please run: python backend.py';
+                error.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
+
